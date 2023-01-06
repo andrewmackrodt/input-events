@@ -1,0 +1,44 @@
+{
+  "name": "input-events",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Input Events",
+  "license": "UNLICENSED",
+  "author": {
+    "name": "Andrew Mackrodt",
+    "email": "andrewmackrodt@gmail.com",
+    "url": "https://github.com/andrewmackrodt/input-events"
+  },
+  "scripts": {
+    "build": "npm-run-all clean:build build:compile",
+    "build:compile": "tsc --sourcemap --outDir out/",
+    "clean": "npm-run-all clean:build clean:coverage",
+    "clean:build": "shx rm -rf out/",
+    "clean:coverage": "shx rm -rf coverage/",
+    "coverage": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --collect-coverage",
+    "lint": "eslint --ext ts .",
+    "lint:check": "eslint --ext ts --format rdjson . | reviewdog -f=rdjson -reporter=github-check",
+    "lint:fix": "eslint --ext ts --fix .",
+    "lint:review": "eslint --ext ts --format rdjson . | reviewdog -f=rdjson -reporter=github-pr-review",
+    "start": "tsx src/index",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest",
+    "watch": "tsx watch src/index"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.2.5",
+    "@types/node": "^16.18.11",
+    "@typescript-eslint/eslint-plugin": "^5.48.0",
+    "@typescript-eslint/parser": "^5.48.0",
+    "eslint": "^8.31.0",
+    "eslint-formatter-rdjson": "^1.0.5",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "jest": "^29.3.1",
+    "npm-run-all": "^4.1.5",
+    "shx": "^0.3.4",
+    "ts-jest": "^29.0.3",
+    "tsx": "^3.12.1",
+    "typescript": "^4.9.4"
+  }
+}
