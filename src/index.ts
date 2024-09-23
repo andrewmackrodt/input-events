@@ -1,17 +1,18 @@
+import type { ChildProcessWithoutNullStreams } from 'child_process'
+import { spawn } from 'child_process'
 import { clearTimeout, setTimeout } from 'timers'
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
 
 const timeoutMillis = 10000
 
 let backlightState = 1
 let lastEventTime = 0
-let child: ChildProcessWithoutNullStreams | null = null
+let libInputProcess: ChildProcessWithoutNullStreams | null = null
 let timeoutId: NodeJS.Timeout | null = null
 
 function exitHandler() {
-    if (child !== null) {
-        child.kill()
-        child = null
+    if (libInputProcess !== null) {
+        libInputProcess.kill()
+        libInputProcess = null
     }
 
     if (timeoutId !== null ) {
@@ -32,7 +33,7 @@ function disableBacklightAfterInactivity(delay: number) {
                 timeoutId = null
             }
             console.log('turning off backlight')
-            toggleBacklight()
+            void toggleBacklight()
             backlightState = 0
         } else {
             disableBacklightAfterInactivity(timeoutMillis - elapsedSinceLastEvent)
@@ -40,12 +41,13 @@ function disableBacklightAfterInactivity(delay: number) {
     }, delay)
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function onEvent(buffer: Buffer) {
     lastEventTime = Date.now()
 
     if (backlightState === 0) {
         console.log('turning on backlight')
-        toggleBacklight()
+        void toggleBacklight()
         backlightState = 1
         disableBacklightAfterInactivity(timeoutMillis)
     }
@@ -94,7 +96,9 @@ async function exec(command: string, args: string[] = []): Promise<ConsoleResult
     })
 
     child.on('exit', code => {
-        console.log(`${command} exited with code ${code}`)
+        if (code !== 0) {
+            console.error(`${command} exited with code ${code}`)
+        }
         res.exitCode = code ?? 0
         resolve(res as ConsoleResult)
     })
@@ -104,22 +108,24 @@ async function exec(command: string, args: string[] = []): Promise<ConsoleResult
 
 
 function spawnLibInputProcess() {
-    child = spawn('stdbuf', ['-oL', '-eL', 'libinput', 'debug-events'], { detached: true })
+    libInputProcess = spawn('stdbuf', ['-oL', '-eL', 'libinput', 'debug-events'], { detached: true })
 
-    child.on('error', error => {
-        console.log('error: ' + error)
+    libInputProcess.on('error', error => {
+        console.error('error: ' + error)
     })
 
-    child.stdout.on('data', data => {
+    libInputProcess.stdout.on('data', data => {
         onEvent(data)
     })
 
-    child.stderr.on('data', data => {
-        console.log('stderr: ' + data)
+    libInputProcess.stderr.on('data', data => {
+        console.error('stderr: ' + data)
     })
 
-    child.on('exit', code => {
-        console.log('libinput exited with code ' + code)
+    libInputProcess.on('exit', code => {
+        if (code !== 0) {
+            console.error('libinput exited with code ' + code)
+        }
     })
 }
 
